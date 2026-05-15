@@ -31,9 +31,9 @@
     </ion-row>
   </ion-grid>
 
-  <ion-text color="danger" *ngIf="cameraError">
-    <p>{{ cameraError }}</p>
-  </ion-text>
+  <p *ngIf="cameraError" style="color: #ff6b6b; margin-top: 12px;">
+    {{ cameraError }}
+  </p>
 
   <div *ngIf="cameraOpen" class="camera-wrapper">
     <div class="camera-header">

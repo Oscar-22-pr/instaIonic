@@ -94,7 +94,7 @@ export class NewPostPage implements OnInit, OnDestroy {
           video: { facingMode: { ideal: 'environment' } },
           audio: false,
         });
-      } catch (e) {
+      } catch {
         stream = await navigator.mediaDevices.getUserMedia({
           video: true,
           audio: false,
@@ -120,18 +120,33 @@ export class NewPostPage implements OnInit, OnDestroy {
       this.cameraOpen = false;
       this.stopCamera();
 
+      if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+        this.cameraError = 'La cámara requiere HTTPS o localhost.';
+        return;
+      }
+
+      const name = error?.name || '';
+      const message = String(error?.message || error || '');
+
       if (
-        error?.name === 'NotAllowedError' ||
-        error?.name === 'PermissionDeniedError'
+        name === 'NotAllowedError' ||
+        name === 'PermissionDeniedError' ||
+        message.toLowerCase().includes('permission')
       ) {
         this.cameraError = 'Permiso de cámara denegado. Autoriza la cámara en el navegador.';
       } else if (
-        error?.name === 'NotFoundError' ||
-        error?.name === 'OverconstrainedError'
+        name === 'NotFoundError' ||
+        name === 'OverconstrainedError' ||
+        message.toLowerCase().includes('no camera') ||
+        message.toLowerCase().includes('camera not found')
       ) {
         this.cameraError = 'No hay cámara disponible en este dispositivo.';
-      } else if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
-        this.cameraError = 'La cámara requiere HTTPS o localhost.';
+      } else if (
+        message.toLowerCase().includes('user cancelled') ||
+        message.toLowerCase().includes('cancelled')
+      ) {
+        // Cancelación normal: no mostrar error fuerte
+        this.cameraError = '';
       } else {
         this.cameraError = 'No se pudo abrir la cámara. Verifica permisos o usa Elegir archivo.';
       }
