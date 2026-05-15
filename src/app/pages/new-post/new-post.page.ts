@@ -1,5 +1,5 @@
-import { Component, OnDestroy, OnInit, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   IonHeader,
@@ -15,10 +15,9 @@ import {
   IonIcon,
   IonCol,
   IonGrid,
-  IonRow,
-} from '@ionic/angular/standalone';
-import { Api } from '../../services/api';
+  IonRow, IonText } from '@ionic/angular/standalone';
 import { Router } from '@angular/router';
+import { Api } from '../../services/api';
 
 import { addIcons } from 'ionicons';
 import { camera, fileTray, cloudUpload, close } from 'ionicons/icons';
@@ -28,7 +27,7 @@ import { camera, fileTray, cloudUpload, close } from 'ionicons/icons';
   templateUrl: './new-post.page.html',
   styleUrls: ['./new-post.page.scss'],
   standalone: true,
-  imports: [
+  imports: [IonText, 
     CommonModule,
     FormsModule,
     IonHeader,
@@ -57,6 +56,7 @@ export class NewPostPage implements OnInit, OnDestroy {
 
   cameraOpen = false;
   cameraStream?: MediaStream;
+  cameraError = '';
 
   constructor(private api: Api, private router: Router) {
     addIcons({ camera, fileTray, cloudUpload, close });
@@ -68,43 +68,73 @@ export class NewPostPage implements OnInit, OnDestroy {
     this.stopCamera();
   }
 
-  onFileChange(ev: any) {
-    const f = ev.target.files?.[0];
+  onFileChange(ev: Event) {
+    const input = ev.target as HTMLInputElement;
+    const f = input.files?.[0];
     if (!f) return;
 
+    this.stopCamera();
     this.file = f;
     this.preview = URL.createObjectURL(f);
   }
 
-  upload() {
-    if (!this.file) return;
-
-    this.api.createPost(this.file, this.caption).subscribe(() => {
-      this.router.navigateByUrl('/feed');
-    });
-  }
-
   async takePhoto() {
+    this.cameraError = '';
+
     try {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error('Este navegador no soporta acceso a la cámara.');
+      }
+
       this.cameraOpen = true;
 
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' },
-        audio: false,
-      });
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: 'environment' } },
+          audio: false,
+        });
+      } catch (e) {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: false,
+        });
+      }
 
       this.cameraStream = stream;
 
       setTimeout(() => {
-        if (this.videoRef?.nativeElement) {
-          this.videoRef.nativeElement.srcObject = stream;
-          this.videoRef.nativeElement.play();
+        const video = this.videoRef?.nativeElement;
+        if (!video) {
+          this.cameraError = 'No se pudo inicializar la vista previa de la cámara.';
+          return;
         }
-      });
-    } catch (error) {
+
+        video.srcObject = stream;
+        video.play().catch(() => {
+          this.cameraError = 'No se pudo reproducir la cámara.';
+        });
+      }, 0);
+    } catch (error: any) {
       console.error('No se pudo abrir la cámara:', error);
       this.cameraOpen = false;
-      alert('No se pudo abrir la cámara. Verifica permisos o usa Elegir archivo.');
+      this.stopCamera();
+
+      if (
+        error?.name === 'NotAllowedError' ||
+        error?.name === 'PermissionDeniedError'
+      ) {
+        this.cameraError = 'Permiso de cámara denegado. Autoriza la cámara en el navegador.';
+      } else if (
+        error?.name === 'NotFoundError' ||
+        error?.name === 'OverconstrainedError'
+      ) {
+        this.cameraError = 'No hay cámara disponible en este dispositivo.';
+      } else if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+        this.cameraError = 'La cámara requiere HTTPS o localhost.';
+      } else {
+        this.cameraError = 'No se pudo abrir la cámara. Verifica permisos o usa Elegir archivo.';
+      }
     }
   }
 
@@ -118,6 +148,7 @@ export class NewPostPage implements OnInit, OnDestroy {
       this.cameraStream.getTracks().forEach((track) => track.stop());
       this.cameraStream = undefined;
     }
+
     if (this.videoRef?.nativeElement) {
       this.videoRef.nativeElement.srcObject = null;
     }
@@ -129,8 +160,8 @@ export class NewPostPage implements OnInit, OnDestroy {
 
     if (!video || !canvas) return;
 
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    canvas.width = video.videoWidth || 1280;
+    canvas.height = video.videoHeight || 720;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -145,5 +176,14 @@ export class NewPostPage implements OnInit, OnDestroy {
 
       this.closeCamera();
     }, 'image/jpeg', 0.9);
+  }
+
+  upload() {
+    if (!this.file) return;
+
+    this.api.createPost(this.file, this.caption).subscribe({
+      next: () => this.router.navigateByUrl('/feed'),
+      error: (err) => console.error('Error al subir post:', err),
+    });
   }
 }

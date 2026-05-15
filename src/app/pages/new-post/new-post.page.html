@@ -16,31 +16,50 @@
     <ion-row>
       <ion-col>
         <ion-button expand="block" (click)="takePhoto()">
-          <ion-icon name="camera" size="large"></ion-icon>
+          <ion-icon name="camera" slot="start"></ion-icon>
           Usar cámara
         </ion-button>
       </ion-col>
 
       <ion-col>
         <ion-button expand="block" (click)="fileInput.click()">
-          <ion-icon name="file-tray" size="large"></ion-icon>
+          <ion-icon name="file-tray" slot="start"></ion-icon>
           Elegir archivo
         </ion-button>
         <input #fileInput type="file" accept="image/*" hidden (change)="onFileChange($event)" />
       </ion-col>
-
-      <ion-col>
-        <ion-button expand="block" (click)="upload()">
-          <ion-icon name="cloud-upload" size="large"></ion-icon>
-          Publicar
-        </ion-button>
-      </ion-col>
     </ion-row>
   </ion-grid>
 
-  <ion-img
-    *ngIf="preview"
-    [src]="preview"
-    style="margin-top: 16px; border-radius: 12px;"
-  ></ion-img>
+  <ion-text color="danger" *ngIf="cameraError">
+    <p>{{ cameraError }}</p>
+  </ion-text>
+
+  <div *ngIf="cameraOpen" class="camera-wrapper">
+    <div class="camera-header">
+      <ion-button fill="clear" color="light" (click)="closeCamera()">
+        <ion-icon name="close"></ion-icon>
+      </ion-button>
+    </div>
+
+    <video #videoRef class="camera-video" autoplay playsinline muted></video>
+
+    <canvas #canvasRef hidden></canvas>
+
+    <div class="camera-actions">
+      <ion-button expand="block" (click)="capturePhoto()">
+        <ion-icon name="camera" slot="start"></ion-icon>
+        Capturar
+      </ion-button>
+    </div>
+  </div>
+
+  <div *ngIf="preview && !cameraOpen" class="preview-wrapper">
+    <ion-img [src]="preview"></ion-img>
+  </div>
+
+  <ion-button expand="block" class="ion-margin-top" (click)="upload()" [disabled]="!file">
+    <ion-icon name="cloud-upload" slot="start"></ion-icon>
+    Publicar
+  </ion-button>
 </ion-content>
