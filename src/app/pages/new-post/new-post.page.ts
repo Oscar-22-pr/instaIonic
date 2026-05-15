@@ -15,7 +15,8 @@ import {
   IonIcon,
   IonCol,
   IonGrid,
-  IonRow, IonText } from '@ionic/angular/standalone';
+  IonRow,
+} from '@ionic/angular/standalone';
 import { Router } from '@angular/router';
 import { Api } from '../../services/api';
 
@@ -27,7 +28,7 @@ import { camera, fileTray, cloudUpload, close } from 'ionicons/icons';
   templateUrl: './new-post.page.html',
   styleUrls: ['./new-post.page.scss'],
   standalone: true,
-  imports: [IonText, 
+  imports: [
     CommonModule,
     FormsModule,
     IonHeader,
@@ -82,6 +83,11 @@ export class NewPostPage implements OnInit, OnDestroy {
     this.cameraError = '';
 
     try {
+      if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+        this.cameraError = 'La cámara requiere HTTPS o localhost.';
+        return;
+      }
+
       if (!navigator.mediaDevices?.getUserMedia) {
         throw new Error('Este navegador no soporta acceso a la cámara.');
       }
@@ -120,33 +126,31 @@ export class NewPostPage implements OnInit, OnDestroy {
       this.cameraOpen = false;
       this.stopCamera();
 
-      if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
-        this.cameraError = 'La cámara requiere HTTPS o localhost.';
+      const name = error?.name || '';
+      const message = String(error?.message || error || '').toLowerCase();
+
+      if (
+        message.includes('user cancelled') ||
+        message.includes('cancelled') ||
+        name === 'AbortError'
+      ) {
+        this.cameraError = '';
         return;
       }
-
-      const name = error?.name || '';
-      const message = String(error?.message || error || '');
 
       if (
         name === 'NotAllowedError' ||
         name === 'PermissionDeniedError' ||
-        message.toLowerCase().includes('permission')
+        message.includes('permission')
       ) {
         this.cameraError = 'Permiso de cámara denegado. Autoriza la cámara en el navegador.';
       } else if (
         name === 'NotFoundError' ||
         name === 'OverconstrainedError' ||
-        message.toLowerCase().includes('no camera') ||
-        message.toLowerCase().includes('camera not found')
+        message.includes('no camera') ||
+        message.includes('camera not found')
       ) {
         this.cameraError = 'No hay cámara disponible en este dispositivo.';
-      } else if (
-        message.toLowerCase().includes('user cancelled') ||
-        message.toLowerCase().includes('cancelled')
-      ) {
-        // Cancelación normal: no mostrar error fuerte
-        this.cameraError = '';
       } else {
         this.cameraError = 'No se pudo abrir la cámara. Verifica permisos o usa Elegir archivo.';
       }
