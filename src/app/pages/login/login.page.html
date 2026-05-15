@@ -27,16 +27,17 @@
       <!-- Registration Fields -->
       <div *ngIf="isRegister" class="form-group fade-in">
         <ion-item class="form-item">
-          <ion-input 
-            label="Nombre completo" 
+          <ion-input
+            label="Nombre completo"
             [(ngModel)]="name"
             placeholder="Tu nombre"
             clearInput>
           </ion-input>
         </ion-item>
+
         <ion-item class="form-item">
-          <ion-input 
-            label="Usuario" 
+          <ion-input
+            label="Usuario"
             [(ngModel)]="username"
             placeholder="nombre_usuario"
             clearInput>
@@ -45,20 +46,21 @@
       </div>
 
       <!-- Common Fields -->
-      <div [ngClass]="{'fade-in': true}">
+      <div class="form-group fade-in">
         <ion-item class="form-item">
-          <ion-input 
-            label="Email" 
+          <ion-input
+            label="Email"
             [(ngModel)]="email"
             type="email"
             placeholder="correo@ejemplo.com"
             clearInput>
           </ion-input>
         </ion-item>
+
         <ion-item class="form-item">
-          <ion-input 
-            label="Contraseña" 
-            type="password" 
+          <ion-input
+            label="Contraseña"
+            type="password"
             [(ngModel)]="password"
             placeholder="••••••••"
             clearInput>
@@ -67,8 +69,8 @@
       </div>
 
       <!-- Submit Button -->
-      <ion-button 
-        expand="block" 
+      <ion-button
+        expand="block"
         (click)="submit()"
         class="submit-button"
         [disabled]="!isFormValid()">
@@ -84,13 +86,16 @@
       <!-- Footer Links -->
       <div class="footer-links">
         <ion-text *ngIf="!isRegister">
-          <p>¿No tienes cuenta? 
-            <span class="link" (click)="isRegister = true">Regístrate</span>
+          <p>
+            ¿No tienes cuenta?
+            <span class="link" (click)="toggleMode()">Regístrate</span>
           </p>
         </ion-text>
+
         <ion-text *ngIf="isRegister">
-          <p>¿Ya tienes cuenta? 
-            <span class="link" (click)="isRegister = false">Inicia sesión</span>
+          <p>
+            ¿Ya tienes cuenta?
+            <span class="link" (click)="toggleMode()">Inicia sesión</span>
           </p>
         </ion-text>
       </div>
