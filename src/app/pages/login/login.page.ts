@@ -24,8 +24,7 @@ import { Router } from '@angular/router';
   styleUrls: ['./login.page.scss'],
   standalone: true,
   imports: [
-    CommonModule,
-    FormsModule,
+    IonIcon,
     IonHeader,
     IonToolbar,
     IonTitle,
@@ -37,10 +36,12 @@ import { Router } from '@angular/router';
     IonSegment,
     IonSegmentButton,
     IonLabel,
-    IonIcon,
+    FormsModule,
+    CommonModule,
   ],
 })
 export class LoginPage implements OnInit {
+
   email = '';
   password = '';
   name = '';
@@ -56,56 +57,32 @@ export class LoginPage implements OnInit {
     if (this.isRegister) {
       return !!this.name && !!this.username && !!this.email && !!this.password;
     }
+
     return !!this.email && !!this.password;
   }
 
-  private blurActiveElement() {
-    const active = document.activeElement as HTMLElement | null;
-    active?.blur();
-  }
-
   submit() {
-    this.blurActiveElement();
-    this.error = '';
-
-    if (!this.isFormValid()) {
-      this.error = 'Completa todos los campos';
-      return;
-    }
-
     if (this.isRegister) {
-      this.auth
-        .register({
-          name: this.name,
-          username: this.username,
-          email: this.email,
-          password: this.password,
-        })
-        .subscribe({
-          next: (res) => {
-            this.auth.setToken(res.token);
-            this.router.navigateByUrl('/feed');
-          },
-          error: () => {
-            this.error = 'No se pudo registrar';
-          },
-        });
+      this.auth.register({
+        name: this.name,
+        email: this.email,
+        password: this.password,
+        username: this.username,
+      }).subscribe({
+        next: res => { this.auth.setToken(res.token); this.router.navigateByUrl('/feed'); },
+        error: _ => this.error = 'No se pudo registrar',
+      });
     } else {
       this.auth.login(this.email, this.password).subscribe({
-        next: (res) => {
-          this.auth.setToken(res.token);
-          this.router.navigateByUrl('/feed');
-        },
-        error: () => {
-          this.error = 'Credenciales inválidas';
-        },
+        next: res => { this.auth.setToken(res.token); this.router.navigateByUrl('/feed'); },
+        error: _ => this.error = 'Credenciales inválidas',
       });
     }
   }
 
   toggleMode() {
-    this.blurActiveElement();
     this.isRegister = !this.isRegister;
     this.error = '';
   }
+
 }

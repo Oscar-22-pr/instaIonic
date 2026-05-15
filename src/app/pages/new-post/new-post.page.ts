@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
@@ -19,11 +19,9 @@ import {
 } from '@ionic/angular/standalone';
 import { Api } from '../../services/api';
 import { Router } from '@angular/router';
-import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
-import { Capacitor } from '@capacitor/core';
 
 import { addIcons } from 'ionicons';
-import { camera, fileTray, cloudUpload } from 'ionicons/icons';
+import { camera, fileTray, cloudUpload, close } from 'ionicons/icons';
 
 @Component({
   selector: 'app-new-post',
@@ -49,16 +47,26 @@ import { camera, fileTray, cloudUpload } from 'ionicons/icons';
     IonRow,
   ],
 })
-export class NewPostPage implements OnInit {
+export class NewPostPage implements OnInit, OnDestroy {
+  @ViewChild('videoRef') videoRef?: ElementRef<HTMLVideoElement>;
+  @ViewChild('canvasRef') canvasRef?: ElementRef<HTMLCanvasElement>;
+
   caption = '';
   file?: File;
   preview?: string;
 
+  cameraOpen = false;
+  cameraStream?: MediaStream;
+
   constructor(private api: Api, private router: Router) {
-    addIcons({ camera, fileTray, cloudUpload });
+    addIcons({ camera, fileTray, cloudUpload, close });
   }
 
   ngOnInit() {}
+
+  ngOnDestroy() {
+    this.stopCamera();
+  }
 
   onFileChange(ev: any) {
     const f = ev.target.files?.[0];
@@ -78,48 +86,64 @@ export class NewPostPage implements OnInit {
 
   async takePhoto() {
     try {
-      // En web, mejor usar selector de archivo para evitar "No camera found"
-      if (Capacitor.getPlatform() === 'web') {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'image/*';
-        input.capture = 'environment';
+      this.cameraOpen = true;
 
-        input.onchange = () => {
-          const file = input.files?.[0];
-          if (!file) return;
-
-          this.file = file;
-          this.preview = URL.createObjectURL(file);
-        };
-
-        input.click();
-        return;
-      }
-
-      const photo = await Camera.getPhoto({
-        quality: 80,
-        resultType: CameraResultType.DataUrl,
-        source: CameraSource.Camera,
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' },
+        audio: false,
       });
 
-      if (!photo.dataUrl) return;
+      this.cameraStream = stream;
 
-      this.preview = photo.dataUrl;
-      this.file = this.dataUrlToFile(photo.dataUrl, 'photo.jpg');
+      setTimeout(() => {
+        if (this.videoRef?.nativeElement) {
+          this.videoRef.nativeElement.srcObject = stream;
+          this.videoRef.nativeElement.play();
+        }
+      });
     } catch (error) {
-      console.error('Error al abrir la cámara:', error);
-      alert('No se pudo abrir la cámara. Usa Elegir archivo.');
+      console.error('No se pudo abrir la cámara:', error);
+      this.cameraOpen = false;
+      alert('No se pudo abrir la cámara. Verifica permisos o usa Elegir archivo.');
     }
   }
 
-  private dataUrlToFile(dataUrl: string, filename: string): File {
-    const arr = dataUrl.split(',');
-    const mime = arr[0].match(/:(.*?);/)![1];
-    const bstr = atob(arr[1]);
-    let n = bstr.length;
-    const u8arr = new Uint8Array(n);
-    while (n--) u8arr[n] = bstr.charCodeAt(n);
-    return new File([u8arr], filename, { type: mime });
+  closeCamera() {
+    this.cameraOpen = false;
+    this.stopCamera();
+  }
+
+  stopCamera() {
+    if (this.cameraStream) {
+      this.cameraStream.getTracks().forEach((track) => track.stop());
+      this.cameraStream = undefined;
+    }
+    if (this.videoRef?.nativeElement) {
+      this.videoRef.nativeElement.srcObject = null;
+    }
+  }
+
+  capturePhoto() {
+    const video = this.videoRef?.nativeElement;
+    const canvas = this.canvasRef?.nativeElement;
+
+    if (!video || !canvas) return;
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+
+      this.file = new File([blob], 'photo.jpg', { type: 'image/jpeg' });
+      this.preview = URL.createObjectURL(blob);
+
+      this.closeCamera();
+    }, 'image/jpeg', 0.9);
   }
 }
