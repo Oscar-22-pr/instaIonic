@@ -3,8 +3,7 @@ import { CommonModule } from '@angular/common';
 import {
   IonHeader, IonToolbar, IonTitle, IonContent,
   IonItem, IonInput, IonButton, IonText,
-  IonSegment, IonSegmentButton, IonLabel
-} from '@ionic/angular/standalone';
+  IonSegment, IonSegmentButton, IonLabel, IonIcon } from '@ionic/angular/standalone';
 import { FormsModule } from '@angular/forms';
 import { Auth } from '../../services/auth';
 import { Router } from '@angular/router';
@@ -14,10 +13,10 @@ import { Router } from '@angular/router';
   templateUrl: './login.page.html',
   styleUrls: ['./login.page.scss'],
   standalone: true,
-  imports: [IonHeader, IonToolbar, IonTitle, IonContent,
+  imports: [IonIcon, IonHeader, IonToolbar, IonTitle, IonContent,
     IonItem, IonInput, IonButton, IonText,
     IonSegment, IonSegmentButton, IonLabel,
-    FormsModule, CommonModule]
+    FormsModule, CommonModule,]
 })
 export class LoginPage implements OnInit {
 
@@ -26,6 +25,14 @@ export class LoginPage implements OnInit {
     constructor(private auth: Auth, private router: Router) {}
 
     ngOnInit(): void {}
+
+    isFormValid(): boolean {
+      if (this.isRegister) {
+        return !!this.name && !!this.username && !!this.email && !!this.password;
+      }
+
+      return !!this.email && !!this.password;
+    }
 
     submit() {
       if (this.isRegister) {
