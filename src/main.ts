@@ -7,6 +7,13 @@ import { routes } from './app/app.routes';
 import { AppComponent } from './app/app.component';
 
 import { defineCustomElements } from '@ionic/pwa-elements/loader';
+import { addIcons } from 'ionicons';
+import { camera, alertCircle } from 'ionicons/icons';
+
+addIcons({
+  camera,
+  'alert-circle': alertCircle,
+});
 
 bootstrapApplication(AppComponent, {
   providers: [
