@@ -38,24 +38,6 @@
     </ion-row>
   </ion-grid>
 
-  <div *ngIf="cameraOpen" class="camera-wrapper">
-    <div class="camera-header">
-      <ion-button fill="clear" (click)="closeCamera()">
-        <ion-icon name="close"></ion-icon>
-      </ion-button>
-    </div>
-
-    <video #videoRef autoplay playsinline class="camera-video"></video>
-
-    <canvas #canvasRef hidden></canvas>
-
-    <div class="camera-actions">
-      <ion-button expand="block" (click)="capturePhoto()">
-        Tomar foto
-      </ion-button>
-    </div>
-  </div>
-
   <ion-img
     *ngIf="preview"
     [src]="preview"
