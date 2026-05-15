@@ -2,15 +2,15 @@
   <ion-toolbar>
     <ion-title>Feed</ion-title>
     <ion-buttons slot="start">
-      <ion-button (click)="goNewPost()">
+      <ion-button (click)="goNewPost($event)">
         <ion-icon name="camera-outline"></ion-icon>
       </ion-button>
     </ion-buttons>
     <ion-buttons slot="end">
-      <ion-button (click)="goFriends()">
+      <ion-button (click)="goFriends($event)">
         <ion-icon name="person-add"></ion-icon>
       </ion-button>
-      <ion-button (click)="logout()">
+      <ion-button (click)="logout($event)">
         <ion-icon name="exit-outline"></ion-icon>
       </ion-button>
     </ion-buttons>

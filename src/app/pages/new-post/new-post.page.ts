@@ -92,8 +92,6 @@ export class NewPostPage implements OnInit, OnDestroy {
         throw new Error('Este navegador no soporta acceso a la cámara.');
       }
 
-      this.cameraOpen = true;
-
       let stream: MediaStream;
       try {
         stream = await navigator.mediaDevices.getUserMedia({
@@ -108,23 +106,25 @@ export class NewPostPage implements OnInit, OnDestroy {
       }
 
       this.cameraStream = stream;
+      this.cameraOpen = true;
 
       setTimeout(() => {
         const video = this.videoRef?.nativeElement;
         if (!video) {
           this.cameraError = 'No se pudo inicializar la vista previa de la cámara.';
+          this.closeCamera();
           return;
         }
 
         video.srcObject = stream;
         video.play().catch(() => {
           this.cameraError = 'No se pudo reproducir la cámara.';
+          this.closeCamera();
         });
       }, 0);
     } catch (error: any) {
       console.error('No se pudo abrir la cámara:', error);
-      this.cameraOpen = false;
-      this.stopCamera();
+      this.closeCamera();
 
       const name = error?.name || '';
       const message = String(error?.message || error || '').toLowerCase();
@@ -152,7 +152,7 @@ export class NewPostPage implements OnInit, OnDestroy {
       ) {
         this.cameraError = 'No hay cámara disponible en este dispositivo.';
       } else {
-        this.cameraError = 'No se pudo abrir la cámara. Verifica permisos o usa Elegir archivo.';
+        this.cameraError = 'No se pudo abrir la cámara. Usa Elegir archivo.';
       }
     }
   }
